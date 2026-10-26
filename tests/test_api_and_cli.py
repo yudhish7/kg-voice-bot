@@ -92,12 +92,12 @@ def test_health(server: Server):
 
 def test_ask_returns_answer_facts_and_sources(server: Server):
     status, _, body = server.post_json(
-        "/ask", {"question": "What does the Fiber 1000 plan include?"}
+        "/ask", {"question": "What does the Premium Savings account include?"}
     )
     data = json.loads(body)
     assert status == 200
-    assert "Mesh Pro router" in data["answer"]
-    assert data["entities"] == ["Fiber 1000 plan"]
+    assert "Platinum debit card" in data["answer"]
+    assert data["entities"] == ["Premium Savings account"]
     assert data["sources"] and data["facts"]
 
 
@@ -116,12 +116,12 @@ def test_ask_rejects_bad_json(server: Server):
 
 
 def test_voice_returns_audio_with_transcript_headers(server: Server):
-    question = b"How fast is the callback for priority support?"
+    question = b"What credit score does the Home Loan need?"
     status, headers, audio = server.request("POST", "/voice", question)
     assert status == 200
     assert headers["content-type"] == "audio/wav" and audio[:4] == b"RIFF"
     assert unquote(headers["x-transcript"]) == question.decode()
-    assert "15 minutes" in unquote(headers["x-answer"])
+    assert "700" in unquote(headers["x-answer"])
 
 
 def test_voice_rejects_empty_and_oversized_audio(server: Server):
@@ -151,7 +151,7 @@ def test_api_key_is_enforced_except_for_health(bot, kg, settings):
         assert srv.post_json("/ask", {"question": "x"})[0] == 401
         assert srv.post_json("/ask", {"question": "x"}, {"Authorization": "Bearer wrong"})[0] == 401
         ok = srv.post_json(
-            "/ask", {"question": "callback priority support"}, {"Authorization": "Bearer s3cret"}
+            "/ask", {"question": "home loan credit score"}, {"Authorization": "Bearer s3cret"}
         )
         assert ok[0] == 200
 
@@ -177,14 +177,14 @@ def test_cli_ingest_stats_ask_voice(cli_env: Path, capsys: pytest.CaptureFixture
     assert main(["stats"]) == 0
     assert json.loads(capsys.readouterr().out)["entities"] > 0
 
-    assert main(["ask", "How fast is the callback for priority support?"]) == 0
-    assert "15 minutes" in capsys.readouterr().out
+    assert main(["ask", "What credit score does the Home Loan need?"]) == 0
+    assert "700" in capsys.readouterr().out
 
-    assert main(["ask", "--json", "What does the Fiber 1000 plan include?"]) == 0
-    assert json.loads(capsys.readouterr().out)["entities"] == ["Fiber 1000 plan"]
+    assert main(["ask", "--json", "What does the Premium Savings account include?"]) == 0
+    assert json.loads(capsys.readouterr().out)["entities"] == ["Premium Savings account"]
 
     question = cli_env / "q.txt"
-    question.write_bytes(b"When does the outage credit apply?")
+    question.write_bytes(b"What is the early closure fee?")
     out = cli_env / "a.wav"
     assert main(["voice", str(question), "-o", str(out)]) == 0
     assert out.read_bytes()[:4] == b"RIFF"

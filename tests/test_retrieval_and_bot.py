@@ -26,24 +26,24 @@ def test_bm25_ranks_matching_document_first_and_skips_zero_scores():
 
 
 def test_retriever_links_entities_and_expands_multi_hop(retriever: GraphRetriever):
-    ev = retriever.retrieve("Does Fiber 1000 come with something that supports WiFi 6?")
-    assert "Fiber 1000 plan" in ev.entities
+    ev = retriever.retrieve("What is the ATM limit on the card that comes with Premium Savings?")
+    assert "Premium Savings account" in ev.entities
     facts = {(t.subject, t.relation, t.object) for t in ev.triples}
-    # Hop 1: what the plan includes. Hop 2: what that router supports.
-    assert ("Fiber 1000 plan", "includes", "Mesh Pro router") in facts
-    assert ("Mesh Pro router", "supports", "WiFi 6") in facts
+    # Hop 1: what the account includes. Hop 2: that card's ATM limit.
+    assert ("Premium Savings account", "includes", "Platinum debit card") in facts
+    assert ("Platinum debit card", "has", "daily ATM limit of 100000 rupees") in facts
 
 
 def test_one_hop_limit_excludes_second_hop_facts(kg: KnowledgeGraph):
-    ev = GraphRetriever(kg, hops=1).retrieve("What does the Fiber 1000 plan include?")
+    ev = GraphRetriever(kg, hops=1).retrieve("What does the Premium Savings account include?")
     facts = {(t.subject, t.relation, t.object) for t in ev.triples}
-    assert ("Mesh Pro router", "supports", "WiFi 6") not in facts
+    assert ("Platinum debit card", "has", "daily ATM limit of 100000 rupees") not in facts
 
 
 def test_retriever_falls_back_to_bm25_without_entities(retriever: GraphRetriever):
-    ev = retriever.retrieve("callback speed")
+    ev = retriever.retrieve("block lost card")
     assert ev.entities == []
-    assert ev.chunks and "callback within 15 minutes" in ev.chunks[0][0].text
+    assert ev.chunks and "block a lost card" in ev.chunks[0][0].text
 
 
 def test_retriever_returns_empty_evidence_for_unrelated_question(retriever: GraphRetriever):
@@ -84,9 +84,9 @@ def test_ingest_path_missing(tmp_path):
 @pytest.mark.parametrize(
     ("question", "expected"),
     [
-        ("How fast is the callback for priority support?", "15 minutes"),
-        ("When does the outage credit apply?", "4 hours"),
-        ("How much does the Fiber 300 plan cost?", "49 dollars"),
+        ("What is the minimum balance for the Premium Savings account?", "25000 rupees"),
+        ("What credit score does the Home Loan need?", "700"),
+        ("How do I block a lost card?", "mobile app"),
     ],
 )
 def test_bot_answers_from_the_knowledge_base(bot: VoiceBot, question: str, expected: str):
@@ -109,9 +109,9 @@ def test_bot_asks_to_repeat_on_empty_input(bot: VoiceBot):
 
 
 def test_voice_round_trip_returns_transcript_and_valid_wav(bot: VoiceBot):
-    reply = bot.ask_voice(b"How fast is the callback for priority support?")
-    assert reply.transcript == "How fast is the callback for priority support?"
-    assert "15 minutes" in reply.answer.text
+    reply = bot.ask_voice(b"What credit score does the Home Loan need?")
+    assert reply.transcript == "What credit score does the Home Loan need?"
+    assert "700" in reply.answer.text
     assert reply.content_type == "audio/wav"
     with wave.open(io.BytesIO(reply.audio)) as wav:
         assert wav.getnframes() > 0 and wav.getframerate() == 16000
@@ -123,11 +123,11 @@ def test_llm_generator_sends_facts_and_passages_in_prompt(retriever: GraphRetrie
     class FakeLLM:
         def complete(self, system: str, prompt: str, max_tokens: int = 512) -> str:
             seen["system"], seen["prompt"] = system, prompt
-            return "Priority support calls back within 15 minutes."
+            return "The Home Loan needs a credit score of 700."
 
-    question = "How fast is priority support callback?"
+    question = "What credit score does the Home Loan need?"
     ev = retriever.retrieve(question)
-    assert LLMGenerator(FakeLLM()).generate(question, ev).startswith("Priority support")
+    assert LLMGenerator(FakeLLM()).generate(question, ev).startswith("The Home Loan")
     assert "ONLY" in seen["system"]
     assert "Passages:" in seen["prompt"] and question in seen["prompt"]
     assert "(none)" in build_prompt("q", Evidence())

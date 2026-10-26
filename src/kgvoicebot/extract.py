@@ -3,7 +3,7 @@
 Two interchangeable extractors implement :class:`TripleExtractor`:
 
 * :class:`RuleBasedExtractor` - offline, deterministic, pattern based. A baseline that
-  works well on short declarative sentences ("The Fiber 300 plan includes a router.").
+  works well on short declarative sentences ("The Home Loan requires a credit score of 700.").
 * :class:`LLMExtractor` - asks an LLM for JSON triples. Much better recall on free text.
 """
 
@@ -102,7 +102,7 @@ class RuleBasedExtractor:
 
 _SYSTEM = (
     "You extract knowledge-graph facts from text. Reply with ONLY a JSON array of "
-    '[subject, relation, object] string triples, e.g. [["Fiber 300", "includes", "router"]]. '
+    '[subject, relation, object] string triples, e.g. [["Home Loan", "requires", "credit score"]]. '
     "Use short noun phrases for entities, lower_snake_case verbs for relations, and resolve "
     "pronouns to the entity they refer to. Return [] if there are no facts."
 )

@@ -19,7 +19,7 @@ _FORMAT_VERSION = 1
 class KnowledgeGraph:
     """A directed multigraph of entities backed by the chunks that mention them.
 
-    Nodes are keyed by the normalised entity name, so "Fiber 300" and "fiber 300." merge.
+    Nodes are keyed by the normalised entity name, so "Home Loan" and "home loan." merge.
     Every node records which chunks mention it; every edge records which chunks assert it.
     """
 
@@ -100,13 +100,13 @@ class KnowledgeGraph:
         """Find graph nodes named in free text.
 
         Pass 1 matches whole entity names (longest first). Pass 2 is a fuzzy fallback for
-        multi-word entities the user abbreviated ("Fiber 1000" for "Fiber 1000 plan"): a node
-        links when at least ``min_overlap`` of its words appear in the text not already
-        consumed by pass 1.
+        multi-word entities the user abbreviated ("Premium Savings" for "Premium Savings
+        account"): a node links when at least ``min_overlap`` of its words appear in the
+        text not already consumed by pass 1.
         """
         haystack = f" {normalize(text)} "
         found: list[str] = []
-        # Longer names first so "fiber 300 plan" wins over "fiber".
+        # Longer names first so "premium savings account" wins over "premium".
         for node in sorted(self.graph.nodes, key=len, reverse=True):
             pattern = rf"(?<![a-z0-9]){re.escape(node)}(?![a-z0-9])"
             match = re.search(pattern, haystack)

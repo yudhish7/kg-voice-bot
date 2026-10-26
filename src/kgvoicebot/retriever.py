@@ -4,7 +4,7 @@ Pipeline for one question:
 
 1. **Entity linking** - find graph nodes named in the question (the *seeds*).
 2. **Graph expansion** - breadth-first walk ``hops`` steps out from the seeds, so facts about
-   related entities (the router a plan includes, what that router supports) come along.
+   related entities (the card an account includes, what that card's ATM limit is) come along.
 3. **Chunk ranking** - blend lexical BM25 with graph proximity: a chunk scores higher when it
    mentions entities close to the seeds. With no seeds this degrades to plain BM25.
 4. **Fact selection** - keep the facts inside the neighbourhood, nearest first.

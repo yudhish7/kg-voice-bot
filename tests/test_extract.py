@@ -11,13 +11,14 @@ def _chunk(text: str) -> Chunk:
 def test_rule_extractor_splits_list_objects_and_strips_determiners():
     triples = RuleBasedExtractor().extract(
         _chunk(
-            "The Fiber 300 plan includes a free router, a static IP address and priority support."
+            "The Premium Savings account includes a Platinum debit card, "
+            "free cheque books and priority banking."
         )
     )
     assert {(t.subject, t.relation, t.object) for t in triples} == {
-        ("Fiber 300 plan", "includes", "free router"),
-        ("Fiber 300 plan", "includes", "static IP address"),
-        ("Fiber 300 plan", "includes", "priority support"),
+        ("Premium Savings account", "includes", "Platinum debit card"),
+        ("Premium Savings account", "includes", "free cheque books"),
+        ("Premium Savings account", "includes", "priority banking"),
     }
     assert all(t.chunk_id == "c:0" for t in triples)
 
@@ -28,7 +29,7 @@ def test_rule_extractor_prefers_longest_relation():
 
 
 def test_rule_extractor_ignores_unmatched_and_overlong_entities():
-    text = "Nothing to see here. " + "word " * 12 + "includes a router."
+    text = "Nothing to see here. " + "word " * 12 + "includes a debit card."
     assert RuleBasedExtractor().extract(_chunk(text)) == []
 
 

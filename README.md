@@ -13,7 +13,7 @@ An end-to-end **voice service bot** built on **Knowledge-Graph RAG**: a caller's
 
 ## Why a knowledge graph?
 
-Plain vector/keyword RAG retrieves passages that *look like* the question. Service questions are often **multi-hop** – *"Does the Fiber 1000 plan come with a router that supports WiFi 6?"* needs `Fiber 1000 plan → includes → Mesh Pro router` **and** `Mesh Pro router → supports → WiFi 6`, which may live in different paragraphs. Walking the graph pulls both facts in together, and the facts are handed to the generator next to the original passages, so answers stay grounded and traceable.
+Plain vector/keyword RAG retrieves passages that *look like* the question. Banking questions are often **multi-hop** – *"What is the ATM limit on the card that comes with Premium Savings?"* needs `Premium Savings account → includes → Platinum debit card` **and** `Platinum debit card → has → daily ATM limit of 100000 rupees`, which may live in different paragraphs. Walking the graph pulls both facts in together, and the facts are handed to the generator next to the original passages, so answers stay grounded and traceable.
 
 ## Features
 
@@ -35,10 +35,12 @@ pip install -e ".[dev]"            # core + tests
 # Offline demo: no API key, no speech engine
 export KGV_EXTRACTOR=rules KGV_GENERATOR=extractive KGV_TTS=stub KGV_ASR=text
 kgvoicebot ingest data/sample --reset
-kgvoicebot ask "Which router does Fiber 1000 come with, and does it support WiFi 6?"
-# -> The Fiber 1000 plan includes the Mesh Pro router, a static IP address and priority support.
-#    The Mesh Pro router supports WiFi 6.
-kgvoicebot ask --json "What does Fiber 1000 include?"   # facts + sources
+kgvoicebot ask "What credit score does the Home Loan need?"
+# -> The Home Loan requires a credit score of 700.
+kgvoicebot ask --json "What is the ATM limit on the card that comes with Premium Savings?"
+# -> JSON with the graph facts (Premium Savings -> Platinum debit card -> ATM limit 100000 rupees)
+#    and source chunks. The offline extractive generator quotes sentences, so for a fluent
+#    multi-hop answer use the LLM generator (set ANTHROPIC_API_KEY).
 ```
 
 ### Full stack (real speech + LLM)
@@ -58,7 +60,7 @@ kgvoicebot serve --port 8000
 ```bash
 curl -s localhost:8000/health
 curl -s localhost:8000/ask  -H 'content-type: application/json' \
-     -d '{"question": "How fast is the callback for priority support?"}'
+     -d '{"question": "How do I block a lost card?"}'
 curl -s localhost:8000/voice --data-binary @question.wav -o answer.wav -D -   # transcript in X-Transcript
 curl -s localhost:8000/ingest -H 'content-type: application/json' \
      -d '{"doc_id": "faq", "text": "The Gold plan includes a smart speaker."}'
@@ -111,7 +113,7 @@ src/kgvoicebot/
   api.py cli.py           Starlette app; argparse CLI
   config.py factory.py    env-based settings; component wiring
 tests/                    60 tests (unit, retrieval, bot, live HTTP server, CLI)
-data/sample/              small "Acme Broadband" help centre used by the demo and tests
+data/sample/              small fictional "Acme Bank" help centre (accounts, cards, loans, support) used by the demo and tests
 ```
 
 Every external dependency (ASR, TTS, LLM, extractor, generator) sits behind a small `Protocol`, so swapping a backend means writing one class and one line in `factory.py`.
@@ -141,7 +143,7 @@ Being upfront about what this is and isn't:
 
 - **Rule-based extraction is a baseline.** It only understands short declarative sentences matching a fixed set of verbs (see `extract.py`). For real documents use the LLM extractor (`KGV_EXTRACTOR=llm`).
 - **The extractive generator can't tell when retrieved text doesn't answer the question** – it returns the closest sentences. It exists for offline use and tests; use the LLM generator in production. Generic words ("plan", "include") shared with unrelated passages can surface weak matches.
-- **No entity resolution beyond normalisation and fuzzy word overlap** – "the Mesh" and "Mesh Pro router" are different nodes. Embedding-based linking and coreference would be the next step.
+- **No entity resolution beyond normalisation and fuzzy word overlap** – "Premium account" and "Premium Savings account" are different nodes. Embedding-based linking and coreference would be the next step.
 - **No conversation memory** – each question is independent; follow-ups like "and how much is it?" need session state.
 - **Batch audio, not streaming** – `/voice` takes a complete recording. Streaming ASR/TTS and barge-in would be needed for a phone-grade agent.
 - **Single process, in-memory graph** – fine for thousands of facts; a graph database would be the move at larger scale.
