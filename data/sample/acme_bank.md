@@ -17,3 +17,12 @@ Priority banking provides a dedicated relationship manager. Phone banking provid
 Customers can block a lost card using the mobile app. The mobile app supports card blocking and fund transfers. The zero liability policy covers unauthorized transactions reported within 3 days. The zero liability policy refunds the full amount.
 
 The early closure fee applies to the Personal Loan only. The early closure fee costs 4 percent of the outstanding balance.
+
+
+## Opening an account
+
+Opening a bank account requires identity proof, address proof and a passport photograph. Identity proof includes Aadhaar card, passport and voter ID. Address proof includes utility bill and rental agreement. Opening a bank account takes 10 minutes at any branch.
+
+## Internet banking
+
+Internet banking requires a registered mobile number. The internet banking login page provides a forgot password link. The password reset process uses a one-time password. The one-time password expires in 5 minutes.
