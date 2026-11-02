@@ -10,3 +10,10 @@ dist/
 .kgvoicebot/
 *.wav
 !demo/**/*.wav
+*.m4a
+*.mp3
+.env.*
+!.env.example
+/replies/
+answer.wav
+service_reply.wav
