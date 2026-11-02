@@ -9,3 +9,4 @@ dist/
 .env
 .kgvoicebot/
 *.wav
+!demo/**/*.wav
